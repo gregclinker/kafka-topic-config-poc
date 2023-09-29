@@ -20,7 +20,7 @@ topicConfigs:
       - name: "follower.replication.throttled.replicas"
         value: ""
       - name: "index.interval.bytes"
-        value: 4096
+        value: 4097
       - name: "leader.replication.throttled.replicas"
         value: ""
       - name: "max.compaction.lag.ms"
@@ -28,7 +28,7 @@ topicConfigs:
       - name: "max.message.bytes"
         value: 1048588
       - name: "message.downconversion.enable"
-        value: false
+        value: true
       - name: "message.format.version"
         value: "3.0-IV1"
       - name: "message.timestamp.difference.max.ms"
@@ -36,7 +36,7 @@ topicConfigs:
       - name: "message.timestamp.type"
         value: "CreateTime"
       - name: "min.cleanable.dirty.ratio"
-        value: 0.5
+        value: 0.6
       - name: "min.compaction.lag.ms"
         value: 0
       - name: "min.insync.replicas"
@@ -56,5 +56,12 @@ topicConfigs:
       - name: "segment.ms"
         value: 604800001
       - name: "unclean.leader.election.enable"
-        value: false
+        value: true
+  - topic: "greg-test2"
+    partitionCount: 2
+    replicationFactor: 2
+    configEntries:
+      - name: "cleanup.policy"
+      - name: "delete.retention.ms"
+        value: 86400003
 

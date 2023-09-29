@@ -7,6 +7,7 @@ import org.apache.kafka.common.config.TopicConfig;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -87,14 +88,23 @@ public class ETopicManagerConfigTest {
 
         final ETopicManagerConfig topicManagerConfig1TopicManagerConfig2Delta = topicManagerConfig1.getDelta(topicManagerConfig2);
         assertNotNull(topicManagerConfig1TopicManagerConfig2Delta);
-        topicManagerConfig1TopicManagerConfig2Delta.getTopicConfigsMap().values().forEach(eTopicConfig -> {
-            assertEquals(0, eTopicConfig.getConfigEntries().size());
-        });
+        final Map<String, ETopicConfig> deltaTopicConfigsMap = topicManagerConfig1TopicManagerConfig2Delta.getTopicConfigsMap();
+        ETopicConfig topicConfig = deltaTopicConfigsMap.get("greg-test1");
+        assertEquals(86400001, topicConfig.getConfigEntriesMap().get("delete.retention.ms").getValue());
+        assertEquals(60001, topicConfig.getConfigEntriesMap().get("file.delete.delay.ms").getValue());
+        assertEquals(9223372036854775807L, topicConfig.getConfigEntriesMap().get("flush.messages").getValue());
+        assertEquals(9223372036854775807L, topicConfig.getConfigEntriesMap().get("flush.ms").getValue());
+        assertEquals(4097, topicConfig.getConfigEntriesMap().get("index.interval.bytes").getValue());
+        assertEquals(true, topicConfig.getConfigEntriesMap().get("message.downconversion.enable").getValue());
+        assertEquals(0.6, topicConfig.getConfigEntriesMap().get("min.cleanable.dirty.ratio").getValue());
+        assertEquals(true, topicConfig.getConfigEntriesMap().get("unclean.leader.election.enable").getValue());
+
+        topicConfig = deltaTopicConfigsMap.get("greg-test2");
+        assertEquals(86400003, topicConfig.getConfigEntriesMap().get("delete.retention.ms").getValue());
     }
 
     private ETopicConfig getTopicConfig() {
-        ETopicConfig topicConfig = new ETopicConfig();
-        topicConfig.setTopic("test-topic");
+        ETopicConfig topicConfig = new ETopicConfig("test-topic");
         topicConfig.getConfigEntries().add(new ETopicConfigEntry("compression.type", "producer"));
         topicConfig.getConfigEntries().add(new ETopicConfigEntry("leader.replication.throttled.replicas", ""));
         topicConfig.getConfigEntries().add(new ETopicConfigEntry("message.downconversion.enable", true));

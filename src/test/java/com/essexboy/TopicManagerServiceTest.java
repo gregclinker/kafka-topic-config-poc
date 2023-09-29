@@ -33,6 +33,15 @@ class TopicManagerServiceTest {
         eTopicManagerConfig = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config-alter1.yaml"));
         assertEquals("java.lang.Integer", eTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
 
+        checkConfig(eTopicManagerConfig);
+        topicManagerService.alterTopicConfigs(eTopicManagerConfig);
+
+        // check the alter has been applied
+        Thread.sleep(5000L);
+        checkConfig(getETopicManagerConfig());
+    }
+
+    private void checkConfig(ETopicManagerConfig eTopicManagerConfig) {
         Map<String, ETopicConfigEntry> topic1ConfigEntriesMap = eTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap();
         assertEquals(86400000, topic1ConfigEntriesMap.get("delete.retention.ms").getValue());
         assertEquals(60000, topic1ConfigEntriesMap.get("file.delete.delay.ms").getValue());
@@ -40,25 +49,6 @@ class TopicManagerServiceTest {
         assertEquals(false, topic1ConfigEntriesMap.get("message.downconversion.enable").getValue());
 
         Map<String, ETopicConfigEntry> topic2ConfigEntriesMap = eTopicManagerConfig.getTopicConfigsMap().get("greg-test2").getConfigEntriesMap();
-        assertEquals(86400001, topic2ConfigEntriesMap.get("delete.retention.ms").getValue());
-        assertEquals(60001, topic2ConfigEntriesMap.get("file.delete.delay.ms").getValue());
-        assertEquals(9223372036854775806L, topic2ConfigEntriesMap.get("flush.messages").getValue());
-        assertEquals(true, topic2ConfigEntriesMap.get("message.downconversion.enable").getValue());
-        topicManagerService.alterTopicConfigs(eTopicManagerConfig);
-
-        // check the alter has been applied
-        Thread.sleep(5000L);
-        eTopicManagerConfig = getETopicManagerConfig();
-        System.out.println(eTopicManagerConfig);
-
-        topic1ConfigEntriesMap = eTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap();
-        assertEquals("java.lang.Integer", topic1ConfigEntriesMap.get("delete.retention.ms").getValue().getClass().getName());
-        assertEquals(86400000, topic1ConfigEntriesMap.get("delete.retention.ms").getValue());
-        assertEquals(60000, topic1ConfigEntriesMap.get("file.delete.delay.ms").getValue());
-        assertEquals(9223372036854775807L, topic1ConfigEntriesMap.get("flush.messages").getValue());
-        assertEquals(false, topic1ConfigEntriesMap.get("message.downconversion.enable").getValue());
-
-        topic2ConfigEntriesMap = eTopicManagerConfig.getTopicConfigsMap().get("greg-test2").getConfigEntriesMap();
         assertEquals(86400001, topic2ConfigEntriesMap.get("delete.retention.ms").getValue());
         assertEquals(60001, topic2ConfigEntriesMap.get("file.delete.delay.ms").getValue());
         assertEquals(9223372036854775806L, topic2ConfigEntriesMap.get("flush.messages").getValue());

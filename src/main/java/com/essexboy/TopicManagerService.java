@@ -23,8 +23,7 @@ public class TopicManagerService {
             final Map<ConfigResource, Config> configResourceConfigMap = adminClient.describeConfigs(configResourceList).all().get();
             configResourceConfigMap.keySet().forEach(key -> {
                 System.out.println(key.toString());
-                ETopicConfig topicConfig = new ETopicConfig();
-                topicConfig.setTopic(key.name());
+                ETopicConfig topicConfig = new ETopicConfig(key.name());
                 final Config config = configResourceConfigMap.get(key);
                 config.entries().forEach(configEntry -> {
                     LOGGER.debug("topic={}, config={}, value={}", key.name(), configEntry.name(), configEntry.value());
@@ -44,7 +43,7 @@ public class TopicManagerService {
             final ETopicManagerConfig deltaTopicManagerConfig = existingTopicManagerConfig.getDelta(topicManagerConfig);
             LOGGER.debug("delta config is {}", deltaTopicManagerConfig);
             final Map<ConfigResource, Collection<AlterConfigOp>> configs = new HashMap<>(1);
-            deltaTopicManagerConfig.getTopicConfigs().forEach(eTopicConfig -> {
+            deltaTopicManagerConfig.getTopicConfigsMap().values().forEach(eTopicConfig -> {
                 final List<AlterConfigOp> alterConfigOps = new ArrayList<>();
                 eTopicConfig.getConfigEntries().forEach(eTopicConfigEntry -> {
                     alterConfigOps.add(new AlterConfigOp(new ConfigEntry(eTopicConfigEntry.getName(), eTopicConfigEntry.getValue().toString()), AlterConfigOp.OpType.SET));

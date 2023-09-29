@@ -19,6 +19,10 @@ public class ETopicConfig {
     private int replicationFactor;
     private List<ETopicConfigEntry> configEntries = new ArrayList<>();
 
+    public ETopicConfig(String topic) {
+        this.topic = topic;
+    }
+
     public List<ETopicConfigEntry> getConfigEntries() {
         configEntries.sort(new Comparator<ETopicConfigEntry>() {
             @Override

@@ -38,7 +38,7 @@ public class ETopicManagerConfig {
     public ETopicManagerConfig getDelta(ETopicManagerConfig newTopicManagerConfig) {
         ETopicManagerConfig deltaTopicManagerConfig = new ETopicManagerConfig();
         deltaTopicManagerConfig.setVersion(this.version);
-        deltaTopicManagerConfig.setTopicConfigsMap(getDeltas(newTopicManagerConfig.topicConfigsMap)));
+        deltaTopicManagerConfig.setTopicConfigsMap(getDeltas(newTopicManagerConfig.topicConfigsMap));
         return deltaTopicManagerConfig;
     }
 
@@ -48,7 +48,7 @@ public class ETopicManagerConfig {
             if (topicConfigsMap.get(topic) == null) {
                 deltaETopicConfigsMap.put(topic, newTopicConfigsMap.get(topic));
             } else if (!topicConfigsMap.get(topic).equals(newTopicConfigsMap.get(topic))) {
-                deltaETopicConfigsMap.put(topic, new ETopicConfig());
+                deltaETopicConfigsMap.put(topic, new ETopicConfig(topic));
                 deltaETopicConfigsMap.get(topic).setConfigEntries(getDeltas(topicConfigsMap.get(topic), newTopicConfigsMap.get(topic)));
 
             }

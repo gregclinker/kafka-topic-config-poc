@@ -38,7 +38,7 @@ public class AppTest {
             System.out.println(topics);
             final List<ConfigResource> configResourceList = topics.stream().map(topic -> new ConfigResource(ConfigResource.Type.TOPIC, topic)).collect(Collectors.toList());
             topics.forEach(topic -> {
-                ETopicConfig topicConfig = new ETopicConfig();
+                ETopicConfig topicConfig = new ETopicConfig(topic);
                 try {
                     final Map<ConfigResource, Config> configResourceConfigMap = adminClient.describeConfigs(configResourceList).all().get();
                     configResourceConfigMap.keySet().forEach(key -> {
