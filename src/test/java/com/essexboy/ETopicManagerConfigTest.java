@@ -3,6 +3,7 @@ package com.essexboy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import org.apache.kafka.common.config.TopicConfig;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -50,23 +51,50 @@ public class ETopicManagerConfigTest {
         final ETopicManagerConfig topicManagerConfig1 = objectMapper.readValue(yaml, ETopicManagerConfig.class);
         assertTrue(topicManagerConfig.getTopicConfigs().equals(topicManagerConfig1.getTopicConfigs()));
 
-        final ETopicManagerConfig topicManagerConfig2 = objectMapper.readValue(this.getClass().getResourceAsStream("/test-topic-config.yaml"), ETopicManagerConfig.class);
+        // check the delta between 2 & 3 is nothing
+        final ETopicManagerConfig topicManagerConfig2 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
         assertNotNull(topicManagerConfig2);
+        final ETopicManagerConfig topicManagerConfig3 = new ETopicManagerConfig(getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        final ETopicManagerConfig topicManagerConfig3TopicManagerConfig2Delta = topicManagerConfig3.getDelta(topicManagerConfig2);
+        topicManagerConfig3TopicManagerConfig2Delta.getTopicConfigsMap().values().forEach(eTopicConfig -> {
+            assertEquals(0, eTopicConfig.getConfigEntries().size());
+        });
     }
 
     @Test
-    public void compare() {
+    public void compare() throws IOException {
         ETopicConfig topicConfig1 = getTopicConfig();
         ETopicConfig topicConfig2 = getTopicConfig();
         assertTrue(topicConfig1.equals(topicConfig2));
 
         topicConfig2.getConfigEntries().set(3, new ETopicConfigEntry("min.insync.replicas", 3));
         assertFalse(topicConfig1.equals(topicConfig2));
+
+        final ETopicManagerConfig topicManagerConfig1 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        assertNotNull(topicManagerConfig1);
+        final ETopicManagerConfig topicManagerConfig2 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        assertNotNull(topicManagerConfig2);
+        assertTrue(topicManagerConfig1.equals(topicManagerConfig2));
+    }
+
+    @Test
+    public void deltas() throws IOException {
+        final ETopicManagerConfig topicManagerConfig1 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        assertNotNull(topicManagerConfig1);
+
+        final ETopicManagerConfig topicManagerConfig2 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1-delta.yaml"));
+        assertNotNull(topicManagerConfig2);
+
+        final ETopicManagerConfig topicManagerConfig1TopicManagerConfig2Delta = topicManagerConfig1.getDelta(topicManagerConfig2);
+        assertNotNull(topicManagerConfig1TopicManagerConfig2Delta);
+        topicManagerConfig1TopicManagerConfig2Delta.getTopicConfigsMap().values().forEach(eTopicConfig -> {
+            assertEquals(0, eTopicConfig.getConfigEntries().size());
+        });
     }
 
     private ETopicConfig getTopicConfig() {
         ETopicConfig topicConfig = new ETopicConfig();
-        topicConfig.setName("test-topic");
+        topicConfig.setTopic("test-topic");
         topicConfig.getConfigEntries().add(new ETopicConfigEntry("compression.type", "producer"));
         topicConfig.getConfigEntries().add(new ETopicConfigEntry("leader.replication.throttled.replicas", ""));
         topicConfig.getConfigEntries().add(new ETopicConfigEntry("message.downconversion.enable", true));

@@ -1,1 +1,1 @@
-export KAFKA=172.18.0.3
+export KAFKA=172.22.0.3

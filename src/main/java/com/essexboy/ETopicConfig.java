@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Getter
@@ -13,7 +14,9 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @EqualsAndHashCode
 public class ETopicConfig {
-    private String name;
+    private String topic;
+    private int partitionCount;
+    private int replicationFactor;
     private List<ETopicConfigEntry> configEntries = new ArrayList<>();
 
     public List<ETopicConfigEntry> getConfigEntries() {
@@ -24,5 +27,9 @@ public class ETopicConfig {
             }
         });
         return configEntries;
+    }
+
+    public Map<String, ETopicConfigEntry> getConfigEntriesMap() {
+        return getConfigEntries().stream().collect(Collectors.toMap(ETopicConfigEntry::getName, c -> c));
     }
 }

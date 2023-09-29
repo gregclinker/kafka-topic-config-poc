@@ -1,0 +1,27 @@
+version: "1.2.3"
+description: "test config"
+topicConfigs:
+  - topic: "greg-test1"
+    partitionCount: 1
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400000
+      - name: "file.delete.delay.ms"
+        value: 60000
+      - name: "flush.messages"
+        value: 9223372036854775807
+      - name: "message.downconversion.enable"
+        value: false
+  - topic: "greg-test2"
+    partitionCount: 2
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400001
+      - name: "file.delete.delay.ms"
+        value: 60001
+      - name: "flush.messages"
+        value: 9223372036854775806
+      - name: "message.downconversion.enable"
+        value: true
