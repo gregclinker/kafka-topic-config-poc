@@ -29,13 +29,6 @@ public class EBTopicManagerConfig {
         this.version = topicManagerConfig.version;
         this.description = topicManagerConfig.description;
         this.setTopicConfigs(topicManagerConfig.getTopicConfigs());
-        //validate();
-    }
-
-    private void validate() {
-        getTopicConfigs().forEach(ebTopicConfig -> {
-            new TopicConfigHelper(ebTopicConfig).validate();
-        });
     }
 
     public List<EBTopicConfig> getTopicConfigs() {

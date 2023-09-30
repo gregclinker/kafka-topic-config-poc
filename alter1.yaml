@@ -1,0 +1,43 @@
+version: "1.2.3"
+description: "test config"
+topicConfigs:
+  - topic: "greg-test11"
+    partitionCount: 1
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400001
+      - name: "file.delete.delay.ms"
+        value: 60001
+  - topic: "greg-test12"
+    partitionCount: 2
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400001
+      - name: "file.delete.delay.ms"
+        value: 60001
+  - topic: "greg-test13"
+    partitionCount: 3
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400001
+      - name: "file.delete.delay.ms"
+        value: 60001
+  - topic: "greg-test14"
+    partitionCount: 4
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400001
+      - name: "file.delete.delay.ms"
+        value: 60005
+  - topic: "greg-test15"
+    partitionCount: 1
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400001
+      - name: "file.delete.delay.ms"
+        value: 60001

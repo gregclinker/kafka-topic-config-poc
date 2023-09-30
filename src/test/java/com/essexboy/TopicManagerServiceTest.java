@@ -3,6 +3,8 @@ package com.essexboy;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.errors.InvalidConfigurationException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
@@ -92,6 +94,17 @@ class TopicManagerServiceTest {
         assertEquals(60002, ebTopicConfigConfigEntriesMap.get("file.delete.delay.ms").getValue());
         assertEquals(9223372036854775806L, ebTopicConfigConfigEntriesMap.get("flush.messages").getValue());
         assertEquals(false, ebTopicConfigConfigEntriesMap.get("message.downconversion.enable").getValue());
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "KAFKA_BOOTSTRAP_SERVERS", value = "localhost:29092")
+    public void badChange() throws Exception {
+        setUp();
+        ExecutionException thrown = Assertions.assertThrows(ExecutionException.class, () -> {
+            EBTopicManagerConfig ebTopicManagerConfig = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1-bad.yaml"));
+            topicManagerService.alterTopicConfigs(ebTopicManagerConfig);
+        });
+        assertEquals("org.apache.kafka.common.errors.InvalidConfigurationException: Unknown topic config name: delete.retention.ms.bad.config", thrown.getMessage());
     }
 
     private EBTopicManagerConfig getETopicManagerConfig() throws InterruptedException, ExecutionException, JsonProcessingException {

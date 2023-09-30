@@ -15,7 +15,7 @@ public class TopicManagerService {
 
     final static Logger LOGGER = LoggerFactory.getLogger(TopicManagerService.class);
 
-    public EBTopicManagerConfig get(AdminClient adminClient) throws InterruptedException, ExecutionException, JsonProcessingException {
+    public EBTopicManagerConfig get(AdminClient adminClient) throws InterruptedException, ExecutionException {
         EBTopicManagerConfig topicManagerConfig = new EBTopicManagerConfig();
         final List<String> topics = adminClient.listTopics().listings().get().stream().map(t -> t.name()).collect(Collectors.toList());
         final List<ConfigResource> configResourceList = topics.stream().map(topic -> new ConfigResource(ConfigResource.Type.TOPIC, topic)).collect(Collectors.toList());
@@ -55,11 +55,7 @@ public class TopicManagerService {
                 final int newPartitionCount = ebTopicConfig.getPartitionCount();
                 if (!exisitingTopics.contains(topic)) {
                     NewTopic newTopic = new NewTopic(topic, newPartitionCount, (short) ebTopicConfig.getReplicationFactor());
-                    final KafkaFuture<Void> all = adminClient.createTopics(Collections.singleton(newTopic)).all();
-                    while (!all.isDone()) {
-                        Thread.sleep(100);
-                    }
-                    all.get();
+                    adminClient.createTopics(Collections.singleton(newTopic)).all().get();
                 }
                 if (existintTopicDescriptionMap.get(topic) != null) {
                     final int existingPartitionCount = existintTopicDescriptionMap.get(topic).partitions().size();
@@ -78,11 +74,7 @@ public class TopicManagerService {
                 configs.put(new ConfigResource(ConfigResource.Type.TOPIC, topic), alterConfigOps);
 
             }
-            final KafkaFuture<Void> all = adminClient.incrementalAlterConfigs(configs).all();
-            while (!all.isDone()) {
-                Thread.sleep(100);
-            }
-            all.get();
+            adminClient.incrementalAlterConfigs(configs).all().get();
         }
     }
 

@@ -9,7 +9,7 @@ topicConfigs:
         value: "delete"
       - name: "compression.type"
         value: "producer"
-      - name: "delete.retention.ms"
+      - name: "delete.retention.ms.bad.config"
         value: 86400001
       - name: "file.delete.delay.ms"
         value: 60001
@@ -21,7 +21,7 @@ topicConfigs:
         value: ""
       - name: "index.interval.bytes"
         value: 4097
-      - name: "leader.replication.throttled.replicas.rubbish"
+      - name: "leader.replication.throttled.replicas"
         value: ""
       - name: "max.compaction.lag.ms"
         value: 9223372036854775807

@@ -1,0 +1,1 @@
+export KAFKA_BOOTSTRAP_SERVERS="localhost:29092" ; java -jar target/kafka-topic-config-poc-0.1.jar alter1.yaml

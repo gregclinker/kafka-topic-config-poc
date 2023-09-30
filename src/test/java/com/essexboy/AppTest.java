@@ -84,11 +84,7 @@ public class AppTest {
                 });
                 configs.put(new ConfigResource(ConfigResource.Type.TOPIC, eTopicConfig.getTopic()), alterConfigOps);
             });
-            final KafkaFuture<Void> all = adminClient.incrementalAlterConfigs(configs).all();
-            while (!all.isDone()) {
-                Thread.sleep(100);
-            }
-            all.get();
+            adminClient.incrementalAlterConfigs(configs).all().get();
         }
     }
 }
