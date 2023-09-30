@@ -2,7 +2,6 @@ package com.essexboy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.admin.*;
-import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

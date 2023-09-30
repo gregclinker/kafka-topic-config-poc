@@ -1,8 +1,6 @@
 package com.essexboy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.admin.*;
-import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +48,7 @@ public class TopicManagerService {
             final Map<String, TopicDescription> existintTopicDescriptionMap = adminClient.describeTopics(exisitingTopics).allTopicNames().get();
             LOGGER.debug("delta config is {}", deltaTopicManagerConfig);
             final Map<ConfigResource, Collection<AlterConfigOp>> configs = new HashMap<>(1);
-            for (EBTopicConfig ebTopicConfig : deltaTopicManagerConfig.getTopicConfigsMap().values()) {
+            for (EBTopicConfig ebTopicConfig : deltaTopicManagerConfig.getTopicConfigs()) {
                 final String topic = ebTopicConfig.getTopic();
                 final int newPartitionCount = ebTopicConfig.getPartitionCount();
                 if (!exisitingTopics.contains(topic)) {

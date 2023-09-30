@@ -3,8 +3,6 @@ package com.essexboy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -57,7 +55,7 @@ public class EBTopicManagerConfigTest {
         assertNotNull(ebTopicManagerConfig2);
         final EBTopicManagerConfig topicManagerConfig3 = new EBTopicManagerConfig(getClass().getResourceAsStream("/test-topic-config1.yaml"));
         final EBTopicManagerConfig topicManagerConfig3TopicManagerConfig2Delta = topicManagerConfig3.getDelta(ebTopicManagerConfig2);
-        topicManagerConfig3TopicManagerConfig2Delta.getTopicConfigsMap().values().forEach(eTopicConfig -> {
+        topicManagerConfig3TopicManagerConfig2Delta.getTopicConfigs().forEach(eTopicConfig -> {
             assertEquals(0, eTopicConfig.getConfigEntries().size());
         });
     }

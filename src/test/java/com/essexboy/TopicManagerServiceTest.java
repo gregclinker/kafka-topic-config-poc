@@ -3,7 +3,6 @@ package com.essexboy;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.common.errors.InvalidConfigurationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -27,7 +26,7 @@ class TopicManagerServiceTest {
         setUp();
         EBTopicManagerConfig ebTopicManagerConfig = getETopicManagerConfig();
         assertNotNull(ebTopicManagerConfig);
-        assertEquals(2, ebTopicManagerConfig.getTopicConfigsMap().values().size());
+        assertEquals(2, ebTopicManagerConfig.getTopicConfigs().size());
         assertEquals("java.lang.Integer", ebTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
 
         // check the alter config is correct
