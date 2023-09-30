@@ -8,11 +8,11 @@ import org.apache.kafka.clients.admin.ConfigEntry;
 @NoArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class ETopicConfigEntry {
+public class EBTopicConfigEntry {
     private String name;
     private Object value;
 
-    public ETopicConfigEntry(ConfigEntry configEntry) {
+    public EBTopicConfigEntry(ConfigEntry configEntry) {
         this.name = configEntry.name();
         this.value = parse(configEntry.value());
     }

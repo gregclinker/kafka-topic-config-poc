@@ -24,38 +24,36 @@ class TopicManagerServiceTest {
     public void test() throws Exception {
         setUp();
 
-        ETopicManagerConfig eTopicManagerConfig = getETopicManagerConfig();
-        assertNotNull(eTopicManagerConfig);
-        assertEquals(2, eTopicManagerConfig.getTopicConfigsMap().values().size());
-        assertEquals("java.lang.Integer", eTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
+        EBTopicManagerConfig EBTopicManagerConfig = getETopicManagerConfig();
+        assertNotNull(EBTopicManagerConfig);
+        assertEquals(2, EBTopicManagerConfig.getTopicConfigsMap().values().size());
+        assertEquals("java.lang.Integer", EBTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
 
         // check the alter config is correct
-        eTopicManagerConfig = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config-alter1.yaml"));
-        assertEquals("java.lang.Integer", eTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
+        EBTopicManagerConfig = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config-alter1.yaml"));
+        assertEquals("java.lang.Integer", EBTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
 
-        checkConfig(eTopicManagerConfig);
-        topicManagerService.alterTopicConfigs(eTopicManagerConfig);
-
+        checkConfig(EBTopicManagerConfig);
+        topicManagerService.alterTopicConfigs(EBTopicManagerConfig);
         // check the alter has been applied
-        Thread.sleep(5000L);
         checkConfig(getETopicManagerConfig());
     }
 
-    private void checkConfig(ETopicManagerConfig eTopicManagerConfig) {
-        Map<String, ETopicConfigEntry> topic1ConfigEntriesMap = eTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap();
+    private void checkConfig(EBTopicManagerConfig EBTopicManagerConfig) {
+        Map<String, EBTopicConfigEntry> topic1ConfigEntriesMap = EBTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap();
         assertEquals(86400000, topic1ConfigEntriesMap.get("delete.retention.ms").getValue());
         assertEquals(60000, topic1ConfigEntriesMap.get("file.delete.delay.ms").getValue());
         assertEquals(9223372036854775807L, topic1ConfigEntriesMap.get("flush.messages").getValue());
         assertEquals(false, topic1ConfigEntriesMap.get("message.downconversion.enable").getValue());
 
-        Map<String, ETopicConfigEntry> topic2ConfigEntriesMap = eTopicManagerConfig.getTopicConfigsMap().get("greg-test2").getConfigEntriesMap();
+        Map<String, EBTopicConfigEntry> topic2ConfigEntriesMap = EBTopicManagerConfig.getTopicConfigsMap().get("greg-test2").getConfigEntriesMap();
         assertEquals(86400001, topic2ConfigEntriesMap.get("delete.retention.ms").getValue());
         assertEquals(60001, topic2ConfigEntriesMap.get("file.delete.delay.ms").getValue());
         assertEquals(9223372036854775806L, topic2ConfigEntriesMap.get("flush.messages").getValue());
         assertEquals(true, topic2ConfigEntriesMap.get("message.downconversion.enable").getValue());
     }
 
-    private ETopicManagerConfig getETopicManagerConfig() throws InterruptedException, ExecutionException, JsonProcessingException {
+    private EBTopicManagerConfig getETopicManagerConfig() throws InterruptedException, ExecutionException, JsonProcessingException {
         try (AdminClient adminClient = AdminClient.create(TopicManagerJobConfig.getConfig().getKafkaProperties())) {
             return topicManagerService.get(adminClient);
         }

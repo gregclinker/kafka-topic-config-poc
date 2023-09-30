@@ -13,27 +13,27 @@ import java.util.stream.Collectors;
 @ToString
 @NoArgsConstructor
 @EqualsAndHashCode
-public class ETopicConfig {
+public class EBTopicConfig {
     private String topic;
     private int partitionCount;
     private int replicationFactor;
-    private List<ETopicConfigEntry> configEntries = new ArrayList<>();
+    private List<EBTopicConfigEntry> configEntries = new ArrayList<>();
 
-    public ETopicConfig(String topic) {
+    public EBTopicConfig(String topic) {
         this.topic = topic;
     }
 
-    public List<ETopicConfigEntry> getConfigEntries() {
-        configEntries.sort(new Comparator<ETopicConfigEntry>() {
+    public List<EBTopicConfigEntry> getConfigEntries() {
+        configEntries.sort(new Comparator<EBTopicConfigEntry>() {
             @Override
-            public int compare(ETopicConfigEntry o1, ETopicConfigEntry o2) {
+            public int compare(EBTopicConfigEntry o1, EBTopicConfigEntry o2) {
                 return o1.getName().compareTo(o2.getName());
             }
         });
         return configEntries;
     }
 
-    public Map<String, ETopicConfigEntry> getConfigEntriesMap() {
-        return getConfigEntries().stream().collect(Collectors.toMap(ETopicConfigEntry::getName, c -> c));
+    public Map<String, EBTopicConfigEntry> getConfigEntriesMap() {
+        return getConfigEntries().stream().collect(Collectors.toMap(EBTopicConfigEntry::getName, c -> c));
     }
 }

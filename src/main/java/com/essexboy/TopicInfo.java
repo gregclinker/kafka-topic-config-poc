@@ -3,7 +3,6 @@ package com.essexboy;
 import lombok.Getter;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.TopicDescription;
-import org.apache.kafka.common.config.TopicConfig;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,7 +1,10 @@
 package com.essexboy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.Config;
+import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
@@ -15,19 +18,19 @@ public class TopicManagerService {
 
     final static Logger LOGGER = LoggerFactory.getLogger(TopicManagerService.class);
 
-    public ETopicManagerConfig get(AdminClient adminClient) throws InterruptedException, ExecutionException, JsonProcessingException {
-        ETopicManagerConfig topicManagerConfig = new ETopicManagerConfig();
+    public EBTopicManagerConfig get(AdminClient adminClient) throws InterruptedException, ExecutionException, JsonProcessingException {
+        EBTopicManagerConfig topicManagerConfig = new EBTopicManagerConfig();
         final List<String> topics = adminClient.listTopics().listings().get().stream().map(t -> t.name()).collect(Collectors.toList());
         final List<ConfigResource> configResourceList = topics.stream().map(topic -> new ConfigResource(ConfigResource.Type.TOPIC, topic)).collect(Collectors.toList());
         try {
             final Map<ConfigResource, Config> configResourceConfigMap = adminClient.describeConfigs(configResourceList).all().get();
             configResourceConfigMap.keySet().forEach(key -> {
                 System.out.println(key.toString());
-                ETopicConfig topicConfig = new ETopicConfig(key.name());
+                EBTopicConfig topicConfig = new EBTopicConfig(key.name());
                 final Config config = configResourceConfigMap.get(key);
                 config.entries().forEach(configEntry -> {
                     LOGGER.debug("topic={}, config={}, value={}", key.name(), configEntry.name(), configEntry.value());
-                    topicConfig.getConfigEntries().add(new ETopicConfigEntry(configEntry));
+                    topicConfig.getConfigEntries().add(new EBTopicConfigEntry(configEntry));
                 });
                 topicManagerConfig.add(topicConfig);
             });
@@ -37,10 +40,10 @@ public class TopicManagerService {
         return topicManagerConfig;
     }
 
-    public void alterTopicConfigs(ETopicManagerConfig topicManagerConfig) throws Exception {
+    public void alterTopicConfigs(EBTopicManagerConfig topicManagerConfig) throws Exception {
         try (AdminClient adminClient = AdminClient.create(TopicManagerJobConfig.getConfig().getKafkaProperties())) {
-            final ETopicManagerConfig existingTopicManagerConfig = get(adminClient);
-            final ETopicManagerConfig deltaTopicManagerConfig = existingTopicManagerConfig.getDelta(topicManagerConfig);
+            final EBTopicManagerConfig existingTopicManagerConfig = get(adminClient);
+            final EBTopicManagerConfig deltaTopicManagerConfig = existingTopicManagerConfig.getDelta(topicManagerConfig);
             LOGGER.debug("delta config is {}", deltaTopicManagerConfig);
             final Map<ConfigResource, Collection<AlterConfigOp>> configs = new HashMap<>(1);
             deltaTopicManagerConfig.getTopicConfigsMap().values().forEach(eTopicConfig -> {

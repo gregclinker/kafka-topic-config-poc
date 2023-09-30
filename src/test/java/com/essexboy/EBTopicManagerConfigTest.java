@@ -3,7 +3,6 @@ package com.essexboy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import org.apache.kafka.common.config.TopicConfig;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -39,24 +38,24 @@ import static org.junit.jupiter.api.Assertions.*;
  * ConfigEntry(name=message.timestamp.difference.max.ms, value=9223372036854775807, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=false, synonyms=[], type=LONG, documentation=null)
  * ConfigEntry(name=segment.index.bytes, value=10485760, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=false, synonyms=[], type=INT, documentation=null)
  */
-public class ETopicManagerConfigTest {
+public class EBTopicManagerConfigTest {
 
     @Test
     public void yaml() throws IOException {
 
-        ETopicManagerConfig topicManagerConfig = new ETopicManagerConfig();
-        topicManagerConfig.getTopicConfigs().add(getTopicConfig());
+        EBTopicManagerConfig topicManagerConfig = new EBTopicManagerConfig();
+        topicManagerConfig.add(getTopicConfig());
 
         final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
         String yaml = objectMapper.writeValueAsString(topicManagerConfig);
-        final ETopicManagerConfig topicManagerConfig1 = objectMapper.readValue(yaml, ETopicManagerConfig.class);
+        final EBTopicManagerConfig topicManagerConfig1 = objectMapper.readValue(yaml, EBTopicManagerConfig.class);
         assertTrue(topicManagerConfig.getTopicConfigs().equals(topicManagerConfig1.getTopicConfigs()));
 
         // check the delta between 2 & 3 is nothing
-        final ETopicManagerConfig topicManagerConfig2 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        final EBTopicManagerConfig topicManagerConfig2 = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
         assertNotNull(topicManagerConfig2);
-        final ETopicManagerConfig topicManagerConfig3 = new ETopicManagerConfig(getClass().getResourceAsStream("/test-topic-config1.yaml"));
-        final ETopicManagerConfig topicManagerConfig3TopicManagerConfig2Delta = topicManagerConfig3.getDelta(topicManagerConfig2);
+        final EBTopicManagerConfig topicManagerConfig3 = new EBTopicManagerConfig(getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        final EBTopicManagerConfig topicManagerConfig3TopicManagerConfig2Delta = topicManagerConfig3.getDelta(topicManagerConfig2);
         topicManagerConfig3TopicManagerConfig2Delta.getTopicConfigsMap().values().forEach(eTopicConfig -> {
             assertEquals(0, eTopicConfig.getConfigEntries().size());
         });
@@ -64,32 +63,32 @@ public class ETopicManagerConfigTest {
 
     @Test
     public void compare() throws IOException {
-        ETopicConfig topicConfig1 = getTopicConfig();
-        ETopicConfig topicConfig2 = getTopicConfig();
+        EBTopicConfig topicConfig1 = getTopicConfig();
+        EBTopicConfig topicConfig2 = getTopicConfig();
         assertTrue(topicConfig1.equals(topicConfig2));
 
-        topicConfig2.getConfigEntries().set(3, new ETopicConfigEntry("min.insync.replicas", 3));
+        topicConfig2.getConfigEntries().set(3, new EBTopicConfigEntry("min.insync.replicas", 3));
         assertFalse(topicConfig1.equals(topicConfig2));
 
-        final ETopicManagerConfig topicManagerConfig1 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        final EBTopicManagerConfig topicManagerConfig1 = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
         assertNotNull(topicManagerConfig1);
-        final ETopicManagerConfig topicManagerConfig2 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        final EBTopicManagerConfig topicManagerConfig2 = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
         assertNotNull(topicManagerConfig2);
         assertTrue(topicManagerConfig1.equals(topicManagerConfig2));
     }
 
     @Test
     public void deltas() throws IOException {
-        final ETopicManagerConfig topicManagerConfig1 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
+        final EBTopicManagerConfig topicManagerConfig1 = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
         assertNotNull(topicManagerConfig1);
 
-        final ETopicManagerConfig topicManagerConfig2 = new ETopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1-delta.yaml"));
+        final EBTopicManagerConfig topicManagerConfig2 = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1-delta.yaml"));
         assertNotNull(topicManagerConfig2);
 
-        final ETopicManagerConfig topicManagerConfig1TopicManagerConfig2Delta = topicManagerConfig1.getDelta(topicManagerConfig2);
+        final EBTopicManagerConfig topicManagerConfig1TopicManagerConfig2Delta = topicManagerConfig1.getDelta(topicManagerConfig2);
         assertNotNull(topicManagerConfig1TopicManagerConfig2Delta);
-        final Map<String, ETopicConfig> deltaTopicConfigsMap = topicManagerConfig1TopicManagerConfig2Delta.getTopicConfigsMap();
-        ETopicConfig topicConfig = deltaTopicConfigsMap.get("greg-test1");
+        final Map<String, EBTopicConfig> deltaTopicConfigsMap = topicManagerConfig1TopicManagerConfig2Delta.getTopicConfigsMap();
+        EBTopicConfig topicConfig = deltaTopicConfigsMap.get("greg-test1");
         assertEquals(86400001, topicConfig.getConfigEntriesMap().get("delete.retention.ms").getValue());
         assertEquals(60001, topicConfig.getConfigEntriesMap().get("file.delete.delay.ms").getValue());
         assertEquals(9223372036854775807L, topicConfig.getConfigEntriesMap().get("flush.messages").getValue());
@@ -103,34 +102,34 @@ public class ETopicManagerConfigTest {
         assertEquals(86400003, topicConfig.getConfigEntriesMap().get("delete.retention.ms").getValue());
     }
 
-    private ETopicConfig getTopicConfig() {
-        ETopicConfig topicConfig = new ETopicConfig("test-topic");
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("compression.type", "producer"));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("leader.replication.throttled.replicas", ""));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("message.downconversion.enable", true));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("min.insync.replicas", 2));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("segment.jitter.ms", 0));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("cleanup.policy", "delete"));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("flush.ms", 9223372036854775807L));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("follower.replication.throttled.replicas", ""));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("segment.bytes", 1073741824));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("retention.ms", 604800000));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("flush.messages", 9223372036854775807L));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("message.format.version", "3.0-IV1"));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("max.compaction.lag.ms", 9223372036854775807L));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("file.delete.delay.ms", 60000));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("max.message.bytes", 1048588));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("min.compaction.lag.ms", 0));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("message.timestamp.type", "CreateTime"));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("preallocate", false));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("min.cleanable.dirty.ratio", 0.5));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("index.interval.bytes", 4096));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("unclean.leader.election.enable", false));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("retention.bytes", -1));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("delete.retention.ms", 86400000));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("segment.ms", 604800000));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("message.timestamp.difference.max.ms", 9223372036854775807L));
-        topicConfig.getConfigEntries().add(new ETopicConfigEntry("segment.index.bytes", 10485760));
+    private EBTopicConfig getTopicConfig() {
+        EBTopicConfig topicConfig = new EBTopicConfig("test-topic");
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("compression.type", "producer"));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("leader.replication.throttled.replicas", ""));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("message.downconversion.enable", true));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("min.insync.replicas", 2));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("segment.jitter.ms", 0));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("cleanup.policy", "delete"));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("flush.ms", 9223372036854775807L));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("follower.replication.throttled.replicas", ""));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("segment.bytes", 1073741824));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("retention.ms", 604800000));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("flush.messages", 9223372036854775807L));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("message.format.version", "3.0-IV1"));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("max.compaction.lag.ms", 9223372036854775807L));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("file.delete.delay.ms", 60000));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("max.message.bytes", 1048588));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("min.compaction.lag.ms", 0));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("message.timestamp.type", "CreateTime"));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("preallocate", false));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("min.cleanable.dirty.ratio", 0.5));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("index.interval.bytes", 4096));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("unclean.leader.election.enable", false));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("retention.bytes", -1));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("delete.retention.ms", 86400000));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("segment.ms", 604800000));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("message.timestamp.difference.max.ms", 9223372036854775807L));
+        topicConfig.getConfigEntries().add(new EBTopicConfigEntry("segment.index.bytes", 10485760));
         return topicConfig;
     }
 }

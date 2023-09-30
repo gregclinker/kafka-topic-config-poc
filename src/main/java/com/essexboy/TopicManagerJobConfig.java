@@ -20,7 +20,7 @@ public class TopicManagerJobConfig {
     final static Logger LOGGER = LoggerFactory.getLogger(TopicManagerJobConfig.class);
 
     private String version;
-    private List<ETopicConfig> topicConfigs;
+    private List<EBTopicConfig> topicConfigs;
     private Properties kafkaProperties;
 
     public static TopicManagerJobConfig getConfig() throws JsonProcessingException {

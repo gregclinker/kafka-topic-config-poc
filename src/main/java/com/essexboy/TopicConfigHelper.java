@@ -1,21 +1,18 @@
 package com.essexboy;
 
-import org.apache.kafka.clients.admin.AlterConfigOp;
-import org.apache.kafka.clients.admin.ConfigEntry;
-import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.config.TopicConfig;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TopicConfigHelper extends TopicConfig {
 
     private List<String> topicConfigs = new ArrayList<>();
-    private ETopicManagerConfig eTopicManagerConfig;
+    private EBTopicManagerConfig EBTopicManagerConfig;
 
-    public TopicConfigHelper(ETopicManagerConfig eTopicManagerConfig) {
+    public TopicConfigHelper(EBTopicManagerConfig EBTopicManagerConfig) {
         super();
-        this.eTopicManagerConfig = eTopicManagerConfig;
+        this.EBTopicManagerConfig = EBTopicManagerConfig;
         topicConfigs.add(SEGMENT_BYTES_CONFIG);
         topicConfigs.add(SEGMENT_BYTES_DOC);
         topicConfigs.add(SEGMENT_MS_CONFIG);
