@@ -1,10 +1,7 @@
 package com.essexboy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AlterConfigOp;
-import org.apache.kafka.clients.admin.Config;
-import org.apache.kafka.clients.admin.ConfigEntry;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
@@ -25,15 +22,20 @@ public class TopicManagerService {
         try {
             final Map<ConfigResource, Config> configResourceConfigMap = adminClient.describeConfigs(configResourceList).all().get();
             configResourceConfigMap.keySet().forEach(key -> {
-                System.out.println(key.toString());
                 EBTopicConfig topicConfig = new EBTopicConfig(key.name());
                 final Config config = configResourceConfigMap.get(key);
                 config.entries().forEach(configEntry -> {
-                    LOGGER.debug("topic={}, config={}, value={}", key.name(), configEntry.name(), configEntry.value());
+                    LOGGER.trace("topic={}, config={}, value={}", key.name(), configEntry.name(), configEntry.value());
                     topicConfig.getConfigEntries().add(new EBTopicConfigEntry(configEntry));
                 });
                 topicManagerConfig.add(topicConfig);
             });
+            //find the partition count
+            final Map<String, TopicDescription> topicDescriptionMap = adminClient.describeTopics(topics).allTopicNames().get();
+            topicDescriptionMap.values().forEach(topicDescription -> {
+                        topicManagerConfig.getTopicConfigsMap().get(topicDescription.name()).setPartitionCount(topicDescription.partitions().size());
+                    }
+            );
         } catch (Exception e) {
             LOGGER.error("error", e);
         }
@@ -44,15 +46,38 @@ public class TopicManagerService {
         try (AdminClient adminClient = AdminClient.create(TopicManagerJobConfig.getConfig().getKafkaProperties())) {
             final EBTopicManagerConfig existingTopicManagerConfig = get(adminClient);
             final EBTopicManagerConfig deltaTopicManagerConfig = existingTopicManagerConfig.getDelta(topicManagerConfig);
+            final List<String> exisitingTopics = getAll();
+            final Map<String, TopicDescription> existintTopicDescriptionMap = adminClient.describeTopics(exisitingTopics).allTopicNames().get();
             LOGGER.debug("delta config is {}", deltaTopicManagerConfig);
             final Map<ConfigResource, Collection<AlterConfigOp>> configs = new HashMap<>(1);
-            deltaTopicManagerConfig.getTopicConfigsMap().values().forEach(eTopicConfig -> {
+            for (EBTopicConfig ebTopicConfig : deltaTopicManagerConfig.getTopicConfigsMap().values()) {
+                final String topic = ebTopicConfig.getTopic();
+                final int newPartitionCount = ebTopicConfig.getPartitionCount();
+                if (!exisitingTopics.contains(topic)) {
+                    NewTopic newTopic = new NewTopic(topic, newPartitionCount, (short) ebTopicConfig.getReplicationFactor());
+                    final KafkaFuture<Void> all = adminClient.createTopics(Collections.singleton(newTopic)).all();
+                    while (!all.isDone()) {
+                        Thread.sleep(100);
+                    }
+                    all.get();
+                }
+                if (existintTopicDescriptionMap.get(topic) != null) {
+                    final int existingPartitionCount = existintTopicDescriptionMap.get(topic).partitions().size();
+                    if (newPartitionCount > existingPartitionCount) {
+                        Map<String, NewPartitions> newPartitionSet = new HashMap<>();
+                        newPartitionSet.put(topic, NewPartitions.increaseTo(newPartitionCount));
+                        adminClient.createPartitions(newPartitionSet).all().get();
+                    } else if (newPartitionCount < existingPartitionCount) {
+                        LOGGER.warn("can't decrease partition count from {} to {} fot topic {}", existingPartitionCount, newPartitionCount, topic);
+                    }
+                }
                 final List<AlterConfigOp> alterConfigOps = new ArrayList<>();
-                eTopicConfig.getConfigEntries().forEach(eTopicConfigEntry -> {
+                ebTopicConfig.getConfigEntries().forEach(eTopicConfigEntry -> {
                     alterConfigOps.add(new AlterConfigOp(new ConfigEntry(eTopicConfigEntry.getName(), eTopicConfigEntry.getValue().toString()), AlterConfigOp.OpType.SET));
                 });
-                configs.put(new ConfigResource(ConfigResource.Type.TOPIC, eTopicConfig.getTopic()), alterConfigOps);
-            });
+                configs.put(new ConfigResource(ConfigResource.Type.TOPIC, topic), alterConfigOps);
+
+            }
             final KafkaFuture<Void> all = adminClient.incrementalAlterConfigs(configs).all();
             while (!all.isDone()) {
                 Thread.sleep(100);

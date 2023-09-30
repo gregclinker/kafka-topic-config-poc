@@ -21,36 +21,77 @@ class TopicManagerServiceTest {
 
     @Test
     @SetEnvironmentVariable(key = "KAFKA_BOOTSTRAP_SERVERS", value = "localhost:29092")
-    public void test() throws Exception {
+    public void alter1() throws Exception {
         setUp();
-
-        EBTopicManagerConfig EBTopicManagerConfig = getETopicManagerConfig();
-        assertNotNull(EBTopicManagerConfig);
-        assertEquals(2, EBTopicManagerConfig.getTopicConfigsMap().values().size());
-        assertEquals("java.lang.Integer", EBTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
+        EBTopicManagerConfig ebTopicManagerConfig = getETopicManagerConfig();
+        assertNotNull(ebTopicManagerConfig);
+        assertEquals(2, ebTopicManagerConfig.getTopicConfigsMap().values().size());
+        assertEquals("java.lang.Integer", ebTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
 
         // check the alter config is correct
-        EBTopicManagerConfig = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config-alter1.yaml"));
-        assertEquals("java.lang.Integer", EBTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
+        ebTopicManagerConfig = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config-alter1.yaml"));
+        assertEquals("java.lang.Integer", ebTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
 
-        checkConfig(EBTopicManagerConfig);
-        topicManagerService.alterTopicConfigs(EBTopicManagerConfig);
+        checkConfigAlter1(ebTopicManagerConfig);
+        topicManagerService.alterTopicConfigs(ebTopicManagerConfig);
         // check the alter has been applied
-        checkConfig(getETopicManagerConfig());
+        checkConfigAlter1(getETopicManagerConfig());
     }
 
-    private void checkConfig(EBTopicManagerConfig EBTopicManagerConfig) {
-        Map<String, EBTopicConfigEntry> topic1ConfigEntriesMap = EBTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap();
-        assertEquals(86400000, topic1ConfigEntriesMap.get("delete.retention.ms").getValue());
-        assertEquals(60000, topic1ConfigEntriesMap.get("file.delete.delay.ms").getValue());
-        assertEquals(9223372036854775807L, topic1ConfigEntriesMap.get("flush.messages").getValue());
-        assertEquals(false, topic1ConfigEntriesMap.get("message.downconversion.enable").getValue());
+    private void checkConfigAlter1(EBTopicManagerConfig ebTopicManagerConfig) {
+        EBTopicConfig ebTopicConfig = ebTopicManagerConfig.getTopicConfigsMap().get("greg-test1");
+        Map<String, EBTopicConfigEntry> ebTopicConfigConfigEntriesMap = ebTopicConfig.getConfigEntriesMap();
+        assertEquals(86400000, ebTopicConfigConfigEntriesMap.get("delete.retention.ms").getValue());
+        assertEquals(60000, ebTopicConfigConfigEntriesMap.get("file.delete.delay.ms").getValue());
+        assertEquals(9223372036854775807L, ebTopicConfigConfigEntriesMap.get("flush.messages").getValue());
+        assertEquals(false, ebTopicConfigConfigEntriesMap.get("message.downconversion.enable").getValue());
 
-        Map<String, EBTopicConfigEntry> topic2ConfigEntriesMap = EBTopicManagerConfig.getTopicConfigsMap().get("greg-test2").getConfigEntriesMap();
-        assertEquals(86400001, topic2ConfigEntriesMap.get("delete.retention.ms").getValue());
-        assertEquals(60001, topic2ConfigEntriesMap.get("file.delete.delay.ms").getValue());
-        assertEquals(9223372036854775806L, topic2ConfigEntriesMap.get("flush.messages").getValue());
-        assertEquals(true, topic2ConfigEntriesMap.get("message.downconversion.enable").getValue());
+        ebTopicConfig = ebTopicManagerConfig.getTopicConfigsMap().get("greg-test2");
+        ebTopicConfigConfigEntriesMap = ebTopicConfig.getConfigEntriesMap();
+        assertEquals(86400001, ebTopicConfigConfigEntriesMap.get("delete.retention.ms").getValue());
+        assertEquals(60001, ebTopicConfigConfigEntriesMap.get("file.delete.delay.ms").getValue());
+        assertEquals(9223372036854775806L, ebTopicConfigConfigEntriesMap.get("flush.messages").getValue());
+        assertEquals(true, ebTopicConfigConfigEntriesMap.get("message.downconversion.enable").getValue());
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "KAFKA_BOOTSTRAP_SERVERS", value = "localhost:29092")
+    public void alter2() throws Exception {
+        setUp();
+        // check the alter config is correct
+        EBTopicManagerConfig ebTopicManagerConfig = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config-alter2.yaml"));
+        assertEquals(3, ebTopicManagerConfig.getTopicConfigs().size());
+        topicManagerService.alterTopicConfigs(ebTopicManagerConfig);
+        // check the alter has been applied
+        checkConfigAlter2(getETopicManagerConfig());
+    }
+
+    private void checkConfigAlter2(EBTopicManagerConfig ebTopicManagerConfig) {
+        assertEquals(3, ebTopicManagerConfig.getTopicConfigs().size());
+
+        EBTopicConfig ebTopicConfig = ebTopicManagerConfig.getTopicConfigsMap().get("greg-test1");
+        Map<String, EBTopicConfigEntry> ebTopicConfigConfigEntriesMap = ebTopicConfig.getConfigEntriesMap();
+        assertEquals(1, ebTopicConfig.getPartitionCount());
+        assertEquals(86400000, ebTopicConfigConfigEntriesMap.get("delete.retention.ms").getValue());
+        assertEquals(60000, ebTopicConfigConfigEntriesMap.get("file.delete.delay.ms").getValue());
+        assertEquals(9223372036854775807L, ebTopicConfigConfigEntriesMap.get("flush.messages").getValue());
+        assertEquals(false, ebTopicConfigConfigEntriesMap.get("message.downconversion.enable").getValue());
+
+        ebTopicConfig = ebTopicManagerConfig.getTopicConfigsMap().get("greg-test2");
+        ebTopicConfigConfigEntriesMap = ebTopicConfig.getConfigEntriesMap();
+        assertEquals(2, ebTopicConfig.getPartitionCount());
+        assertEquals(86400001, ebTopicConfigConfigEntriesMap.get("delete.retention.ms").getValue());
+        assertEquals(60001, ebTopicConfigConfigEntriesMap.get("file.delete.delay.ms").getValue());
+        assertEquals(9223372036854775806L, ebTopicConfigConfigEntriesMap.get("flush.messages").getValue());
+        assertEquals(true, ebTopicConfigConfigEntriesMap.get("message.downconversion.enable").getValue());
+
+        ebTopicConfig = ebTopicManagerConfig.getTopicConfigsMap().get("greg-test3");
+        ebTopicConfigConfigEntriesMap = ebTopicConfig.getConfigEntriesMap();
+        assertEquals(3, ebTopicConfig.getPartitionCount());
+        assertEquals(86400002, ebTopicConfigConfigEntriesMap.get("delete.retention.ms").getValue());
+        assertEquals(60002, ebTopicConfigConfigEntriesMap.get("file.delete.delay.ms").getValue());
+        assertEquals(9223372036854775806L, ebTopicConfigConfigEntriesMap.get("flush.messages").getValue());
+        assertEquals(false, ebTopicConfigConfigEntriesMap.get("message.downconversion.enable").getValue());
     }
 
     private EBTopicManagerConfig getETopicManagerConfig() throws InterruptedException, ExecutionException, JsonProcessingException {
@@ -65,8 +106,8 @@ class TopicManagerServiceTest {
             client.deleteTopics(topics).all().get();
             Thread.sleep(5000L);
             List<NewTopic> newTopics = new ArrayList<>();
-            newTopics.add(new NewTopic("greg-test1", 3, (short) 1));
-            newTopics.add(new NewTopic("greg-test2", 3, (short) 1));
+            newTopics.add(new NewTopic("greg-test1", 1, (short) 1));
+            newTopics.add(new NewTopic("greg-test2", 1, (short) 1));
             client.createTopics(newTopics).all().get();
         }
     }

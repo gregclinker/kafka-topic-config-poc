@@ -8,7 +8,7 @@ topicConfigs:
       - name: "delete.retention.ms"
         value: 86400000
       - name: "file.delete.delay.ms"
-        value: 60001
+        value: 60000
       - name: "flush.messages"
         value: 9223372036854775807
       - name: "message.downconversion.enable"
@@ -20,8 +20,20 @@ topicConfigs:
       - name: "delete.retention.ms"
         value: 86400001
       - name: "file.delete.delay.ms"
-        value: 60002
+        value: 60001
       - name: "flush.messages"
         value: 9223372036854775806
       - name: "message.downconversion.enable"
         value: true
+  - topic: "greg-test3"
+    partitionCount: 3
+    replicationFactor: 1
+    configEntries:
+      - name: "delete.retention.ms"
+        value: 86400002
+      - name: "file.delete.delay.ms"
+        value: 60002
+      - name: "flush.messages"
+        value: 9223372036854775806
+      - name: "message.downconversion.enable"
+        value: false

@@ -3,6 +3,8 @@ package com.essexboy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -42,7 +44,6 @@ public class EBTopicManagerConfigTest {
 
     @Test
     public void yaml() throws IOException {
-
         EBTopicManagerConfig topicManagerConfig = new EBTopicManagerConfig();
         topicManagerConfig.add(getTopicConfig());
 
@@ -81,25 +82,43 @@ public class EBTopicManagerConfigTest {
     public void deltas() throws IOException {
         final EBTopicManagerConfig topicManagerConfig1 = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1.yaml"));
         assertNotNull(topicManagerConfig1);
+        assertEquals(1, topicManagerConfig1.getTopicConfigsMap().get("greg-test1").getPartitionCount());
 
         final EBTopicManagerConfig topicManagerConfig2 = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1-delta.yaml"));
         assertNotNull(topicManagerConfig2);
+        assertEquals(2, topicManagerConfig2.getTopicConfigsMap().get("greg-test2").getPartitionCount());
 
         final EBTopicManagerConfig topicManagerConfig1TopicManagerConfig2Delta = topicManagerConfig1.getDelta(topicManagerConfig2);
         assertNotNull(topicManagerConfig1TopicManagerConfig2Delta);
         final Map<String, EBTopicConfig> deltaTopicConfigsMap = topicManagerConfig1TopicManagerConfig2Delta.getTopicConfigsMap();
         EBTopicConfig topicConfig = deltaTopicConfigsMap.get("greg-test1");
+        // no change to prtition
+        assertEquals(0, topicConfig.getPartitionCount());
+        // only change what's needed
+        assertEquals(7, topicConfig.getConfigEntries().size());
         assertEquals(86400001, topicConfig.getConfigEntriesMap().get("delete.retention.ms").getValue());
         assertEquals(60001, topicConfig.getConfigEntriesMap().get("file.delete.delay.ms").getValue());
-        assertEquals(9223372036854775807L, topicConfig.getConfigEntriesMap().get("flush.messages").getValue());
-        assertEquals(9223372036854775807L, topicConfig.getConfigEntriesMap().get("flush.ms").getValue());
+        assertEquals(604800001, topicConfig.getConfigEntriesMap().get("retention.ms").getValue());
+        assertEquals(604800001, topicConfig.getConfigEntriesMap().get("segment.ms").getValue());
         assertEquals(4097, topicConfig.getConfigEntriesMap().get("index.interval.bytes").getValue());
-        assertEquals(true, topicConfig.getConfigEntriesMap().get("message.downconversion.enable").getValue());
         assertEquals(0.6, topicConfig.getConfigEntriesMap().get("min.cleanable.dirty.ratio").getValue());
         assertEquals(true, topicConfig.getConfigEntriesMap().get("unclean.leader.election.enable").getValue());
 
+        // new topic
         topicConfig = deltaTopicConfigsMap.get("greg-test2");
+        assertEquals(1, topicConfig.getConfigEntries().size());
+        // set partitions (non zero)
+        assertEquals(2, topicConfig.getPartitionCount());
         assertEquals(86400003, topicConfig.getConfigEntriesMap().get("delete.retention.ms").getValue());
+    }
+
+    @Test
+    @Disabled
+    public void badConfig() throws IOException {
+        RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
+            new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1-bad.yaml"));
+        });
+        Assertions.assertEquals("some message", thrown.getMessage());
     }
 
     private EBTopicConfig getTopicConfig() {

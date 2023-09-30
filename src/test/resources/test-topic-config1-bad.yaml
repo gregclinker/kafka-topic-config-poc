@@ -21,7 +21,7 @@ topicConfigs:
         value: ""
       - name: "index.interval.bytes"
         value: 4097
-      - name: "leader.replication.throttled.replicas"
+      - name: "leader.replication.throttled.replicas.rubbish"
         value: ""
       - name: "max.compaction.lag.ms"
         value: 9223372036854775807

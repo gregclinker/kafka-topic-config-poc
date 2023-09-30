@@ -8,11 +8,11 @@ import java.util.List;
 public class TopicConfigHelper extends TopicConfig {
 
     private List<String> topicConfigs = new ArrayList<>();
-    private EBTopicManagerConfig EBTopicManagerConfig;
+    private EBTopicConfig ebTopicConfig;
 
-    public TopicConfigHelper(EBTopicManagerConfig EBTopicManagerConfig) {
+    public TopicConfigHelper(EBTopicConfig ebTopicConfig) {
         super();
-        this.EBTopicManagerConfig = EBTopicManagerConfig;
+        this.ebTopicConfig = ebTopicConfig;
         topicConfigs.add(SEGMENT_BYTES_CONFIG);
         topicConfigs.add(SEGMENT_BYTES_DOC);
         topicConfigs.add(SEGMENT_MS_CONFIG);
@@ -63,8 +63,11 @@ public class TopicConfigHelper extends TopicConfig {
         topicConfigs.add(PREALLOCATE_DOC);
     }
 
-    private boolean isValid(String config) {
-        return topicConfigs.contains(config);
+    public void validate() {
+        ebTopicConfig.getConfigEntries().forEach(ebTopicConfigEntry -> {
+            if (!topicConfigs.contains(ebTopicConfigEntry.getName())) {
+                throw new RuntimeException("ERROR " + ebTopicConfigEntry.getName() + " is invalid topc config");
+            }
+        });
     }
-
 }

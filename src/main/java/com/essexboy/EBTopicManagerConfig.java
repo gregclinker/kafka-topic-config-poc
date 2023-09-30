@@ -7,10 +7,10 @@ import lombok.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Setter
 @Getter
@@ -22,16 +22,30 @@ public class EBTopicManagerConfig {
     private final static ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
     private String version;
     private String description;
-    private List<EBTopicConfig> topicConfigs = new ArrayList<>();
     private Map<String, EBTopicConfig> topicConfigsMap = new HashMap<>();
 
     public EBTopicManagerConfig(InputStream inputStream) throws IOException {
         final EBTopicManagerConfig topicManagerConfig = objectMapper.readValue(inputStream, EBTopicManagerConfig.class);
         this.version = topicManagerConfig.version;
         this.description = topicManagerConfig.description;
-        this.topicConfigs = topicManagerConfig.topicConfigs;
-        topicConfigs.forEach(eTopicConfig -> {
-            topicConfigsMap.put(eTopicConfig.getTopic(), eTopicConfig);
+        this.setTopicConfigs(topicManagerConfig.getTopicConfigs());
+        //validate();
+    }
+
+    private void validate() {
+        getTopicConfigs().forEach(ebTopicConfig -> {
+            new TopicConfigHelper(ebTopicConfig).validate();
+        });
+    }
+
+    public List<EBTopicConfig> getTopicConfigs() {
+        return topicConfigsMap.values().stream().collect(Collectors.toList());
+    }
+
+    public void setTopicConfigs(List<EBTopicConfig> topicConfigs) {
+        topicConfigsMap = new HashMap<>();
+        topicConfigs.forEach(ebTopicConfig -> {
+            topicConfigsMap.put(ebTopicConfig.getTopic(), ebTopicConfig);
         });
     }
 
@@ -43,31 +57,42 @@ public class EBTopicManagerConfig {
     }
 
     public Map<String, EBTopicConfig> getDeltas(Map<String, EBTopicConfig> newTopicConfigsMap) {
-        Map<String, EBTopicConfig> deltaETopicConfigsMap = new HashMap<>();
+        Map<String, EBTopicConfig> deltaEbTopicConfigsMap = new HashMap<>();
         newTopicConfigsMap.keySet().forEach(topic -> {
-            if (topicConfigsMap.get(topic) == null) {
-                deltaETopicConfigsMap.put(topic, newTopicConfigsMap.get(topic));
-            } else if (!topicConfigsMap.get(topic).equals(newTopicConfigsMap.get(topic))) {
-                deltaETopicConfigsMap.put(topic, new EBTopicConfig(topic));
-                deltaETopicConfigsMap.get(topic).setConfigEntries(getDeltas(newTopicConfigsMap.get(topic)));
+            final EBTopicConfig existingEbTopicConfig = topicConfigsMap.get(topic);
+            final EBTopicConfig newEbTopicConfig = newTopicConfigsMap.get(topic);
+            if (existingEbTopicConfig == null) {
+                deltaEbTopicConfigsMap.put(topic, newEbTopicConfig);
+            } else if (!existingEbTopicConfig.equals(newEbTopicConfig)) {
+                // if the partion count is to be change set it to non zero
+                deltaEbTopicConfigsMap.put(topic, new EBTopicConfig(topic));
+                if (existingEbTopicConfig.getPartitionCount() != newEbTopicConfig.getPartitionCount()) {
+                    deltaEbTopicConfigsMap.get(topic).setPartitionCount(newEbTopicConfig.getPartitionCount());
+                }
+                deltaEbTopicConfigsMap.get(topic).setConfigEntries(getDeltas(newEbTopicConfig));
 
             }
         });
-        return deltaETopicConfigsMap;
+        return deltaEbTopicConfigsMap;
     }
 
     public List<EBTopicConfigEntry> getDeltas(EBTopicConfig newTopicConfig) {
-        List<EBTopicConfigEntry> deltaETopicConfigEntries = new ArrayList<>();
-        newTopicConfig.getConfigEntries().forEach(newETopicConfigEntry -> {
-            if (topicConfigsMap.get(newETopicConfigEntry.getName()) == null || !topicConfigsMap.get(newETopicConfigEntry.getName()).equals(newETopicConfigEntry)) {
-                deltaETopicConfigEntries.add(newETopicConfigEntry);
+        final String topic = newTopicConfig.getTopic();
+        final Map<String, EBTopicConfigEntry> existingConfigEntriesMap = topicConfigsMap.get(topic).getConfigEntriesMap();
+        final Map<String, EBTopicConfigEntry> newConfigEntriesMap = newTopicConfig.getConfigEntriesMap();
+        final Map<String, EBTopicConfigEntry> deltaConfigEntriesMap = new HashMap<>();
+        newConfigEntriesMap.keySet().forEach(key -> {
+            final EBTopicConfigEntry exisitingEbTopicConfigEntry = existingConfigEntriesMap.get(key);
+            final EBTopicConfigEntry newEbTopicConfigEntry = newConfigEntriesMap.get(key);
+            if (exisitingEbTopicConfigEntry == null || !exisitingEbTopicConfigEntry.equals(newEbTopicConfigEntry)) {
+                deltaConfigEntriesMap.put(key, newEbTopicConfigEntry);
             }
+
         });
-        return deltaETopicConfigEntries;
+        return deltaConfigEntriesMap.values().stream().collect(Collectors.toList());
     }
 
     public void add(EBTopicConfig EBTopicConfig) {
-        topicConfigs.add(EBTopicConfig);
         topicConfigsMap.put(EBTopicConfig.getTopic(), EBTopicConfig);
     }
 }
