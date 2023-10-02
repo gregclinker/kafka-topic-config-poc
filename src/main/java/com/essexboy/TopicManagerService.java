@@ -1,5 +1,5 @@
 package com.essexboy;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
@@ -9,50 +9,53 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+/**
+ * Class to get and set topic configuration on a running Kafka cluster.
+ */
 public class TopicManagerService {
 
     final static Logger LOGGER = LoggerFactory.getLogger(TopicManagerService.class);
 
-    public EBTopicManagerConfig get(AdminClient adminClient) throws InterruptedException, ExecutionException {
-        EBTopicManagerConfig topicManagerConfig = new EBTopicManagerConfig();
-        final List<String> topics = adminClient.listTopics().listings().get().stream().map(t -> t.name()).collect(Collectors.toList());
-        final List<ConfigResource> configResourceList = topics.stream().map(topic -> new ConfigResource(ConfigResource.Type.TOPIC, topic)).collect(Collectors.toList());
-        try {
-            final Map<ConfigResource, Config> configResourceConfigMap = adminClient.describeConfigs(configResourceList).all().get();
-            configResourceConfigMap.keySet().forEach(key -> {
-                EBTopicConfig topicConfig = new EBTopicConfig(key.name());
-                final Config config = configResourceConfigMap.get(key);
-                config.entries().forEach(configEntry -> {
-                    LOGGER.trace("topic={}, config={}, value={}", key.name(), configEntry.name(), configEntry.value());
-                    topicConfig.getConfigEntries().add(new EBTopicConfigEntry(configEntry));
+    public EBTopicManagerConfig get() throws InterruptedException, ExecutionException {
+        try (AdminClient adminClient = AdminClient.create(TopicManagerJobConfig.getConfig().getKafkaProperties())) {
+            EBTopicManagerConfig topicManagerConfig = new EBTopicManagerConfig();
+            final List<String> topics = adminClient.listTopics().listings().get().stream().map(TopicListing::name).collect(Collectors.toList());
+            final List<ConfigResource> configResourceList = topics.stream().map(topic -> new ConfigResource(ConfigResource.Type.TOPIC, topic)).collect(Collectors.toList());
+            try {
+                final Map<ConfigResource, Config> configResourceConfigMap = adminClient.describeConfigs(configResourceList).all().get();
+                configResourceConfigMap.keySet().forEach(key -> {
+                    EBTopicConfig topicConfig = new EBTopicConfig(key.name());
+                    final Config config = configResourceConfigMap.get(key);
+                    config.entries().forEach(configEntry -> {
+                        LOGGER.trace("topic={}, config={}, value={}", key.name(), configEntry.name(), configEntry.value());
+                        topicConfig.getConfigEntries().add(new EBTopicConfigEntry(configEntry));
+                    });
+                    topicManagerConfig.add(topicConfig);
                 });
-                topicManagerConfig.add(topicConfig);
-            });
-            //find the partition count
-            final Map<String, TopicDescription> topicDescriptionMap = adminClient.describeTopics(topics).allTopicNames().get();
-            topicDescriptionMap.values().forEach(topicDescription -> {
-                        topicManagerConfig.getTopicConfigsMap().get(topicDescription.name()).setPartitionCount(topicDescription.partitions().size());
-                    }
-            );
-        } catch (Exception e) {
-            LOGGER.error("error", e);
+                //find the partition count
+                final Map<String, TopicDescription> topicDescriptionMap = adminClient.describeTopics(topics).allTopicNames().get();
+                topicDescriptionMap.values().forEach(topicDescription -> topicManagerConfig.getTopicConfigsMap().get(topicDescription.name()).setPartitionCount(topicDescription.partitions().size())
+                );
+            } catch (Exception e) {
+                LOGGER.error("error", e);
+            }
+            return topicManagerConfig;
         }
-        return topicManagerConfig;
     }
 
-    public void alterTopicConfigs(EBTopicManagerConfig topicManagerConfig) throws Exception {
+    public void alter(EBTopicManagerConfig newTopicManagerConfig) throws Exception {
         try (AdminClient adminClient = AdminClient.create(TopicManagerJobConfig.getConfig().getKafkaProperties())) {
-            final EBTopicManagerConfig existingTopicManagerConfig = get(adminClient);
-            final EBTopicManagerConfig deltaTopicManagerConfig = existingTopicManagerConfig.getDelta(topicManagerConfig);
+            final EBTopicManagerConfig existingTopicManagerConfig = get();
+            final EBTopicManagerConfig deltaTopicManagerConfig = existingTopicManagerConfig.getDelta(newTopicManagerConfig);
             final List<String> exisitingTopics = getAll();
             final Map<String, TopicDescription> existintTopicDescriptionMap = adminClient.describeTopics(exisitingTopics).allTopicNames().get();
             LOGGER.debug("delta config is {}", deltaTopicManagerConfig);
             final Map<ConfigResource, Collection<AlterConfigOp>> configs = new HashMap<>(1);
-            for (EBTopicConfig ebTopicConfig : deltaTopicManagerConfig.getTopicConfigs()) {
-                final String topic = ebTopicConfig.getTopic();
-                final int newPartitionCount = ebTopicConfig.getPartitionCount();
+            for (EBTopicConfig topicConfig : deltaTopicManagerConfig.getTopicConfigs()) {
+                final String topic = topicConfig.getTopic();
+                final int newPartitionCount = topicConfig.getPartitionCount();
                 if (!exisitingTopics.contains(topic)) {
-                    NewTopic newTopic = new NewTopic(topic, newPartitionCount, (short) ebTopicConfig.getReplicationFactor());
+                    NewTopic newTopic = new NewTopic(topic, newPartitionCount, (short) topicConfig.getReplicationFactor());
                     adminClient.createTopics(Collections.singleton(newTopic)).all().get();
                 }
                 if (existintTopicDescriptionMap.get(topic) != null) {
@@ -66,9 +69,7 @@ public class TopicManagerService {
                     }
                 }
                 final List<AlterConfigOp> alterConfigOps = new ArrayList<>();
-                ebTopicConfig.getConfigEntries().forEach(eTopicConfigEntry -> {
-                    alterConfigOps.add(new AlterConfigOp(new ConfigEntry(eTopicConfigEntry.getName(), eTopicConfigEntry.getValue().toString()), AlterConfigOp.OpType.SET));
-                });
+                topicConfig.getConfigEntries().forEach(eTopicConfigEntry -> alterConfigOps.add(new AlterConfigOp(new ConfigEntry(eTopicConfigEntry.getName(), eTopicConfigEntry.getValue().toString()), AlterConfigOp.OpType.SET)));
                 configs.put(new ConfigResource(ConfigResource.Type.TOPIC, topic), alterConfigOps);
 
             }
@@ -76,9 +77,9 @@ public class TopicManagerService {
         }
     }
 
-    public List<String> getAll() throws Exception {
+    private List<String> getAll() throws Exception {
         try (AdminClient client = AdminClient.create(TopicManagerJobConfig.getConfig().getKafkaProperties())) {
-            return client.listTopics().listings().get().stream().map(t -> t.name()).collect(Collectors.toList());
+            return client.listTopics().listings().get().stream().map(TopicListing::name).collect(Collectors.toList());
         }
     }
 }

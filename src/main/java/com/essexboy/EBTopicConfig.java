@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * POJO class to define the configuration of an individual topic.
+ */
 @Getter
 @Setter
 @ToString

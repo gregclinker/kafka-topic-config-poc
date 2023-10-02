@@ -19,8 +19,8 @@ public class App {
             } else {
                 final TopicManagerService topicManagerService = new TopicManagerService();
                 System.out.println(args[0]);
-                final EBTopicManagerConfig ebTopicManagerConfig = new EBTopicManagerConfig(new FileInputStream(args[0]));
-                topicManagerService.alterTopicConfigs(ebTopicManagerConfig);
+                final EBTopicManagerConfig topicManagerConfig = new EBTopicManagerConfig(new FileInputStream(args[0]));
+                topicManagerService.alter(topicManagerConfig);
                 System.exit(0);
             }
         } catch (Exception e) {

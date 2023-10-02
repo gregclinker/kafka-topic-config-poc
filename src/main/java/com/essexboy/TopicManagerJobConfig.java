@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Properties;
 
+/**
+ * Class to manage the configuration of the application.
+ */
 @Getter
 @Setter
 @ToString
@@ -23,7 +26,7 @@ public class TopicManagerJobConfig {
     private List<EBTopicConfig> topicConfigs;
     private Properties kafkaProperties;
 
-    public static TopicManagerJobConfig getConfig() throws JsonProcessingException {
+    public static TopicManagerJobConfig getConfig() {
         final TopicManagerJobConfig topicManagerJobConfig = new TopicManagerJobConfig();
         Properties properties = new Properties();
         System.getenv().keySet().stream().filter(key -> key.startsWith("KAFKA_")).forEach(key -> {

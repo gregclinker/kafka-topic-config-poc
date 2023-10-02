@@ -1,6 +1,5 @@
 package com.essexboy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.junit.jupiter.api.Assertions;
@@ -24,7 +23,7 @@ class TopicManagerServiceTest {
     @SetEnvironmentVariable(key = "KAFKA_BOOTSTRAP_SERVERS", value = "localhost:29092")
     public void alter1() throws Exception {
         setUp();
-        EBTopicManagerConfig ebTopicManagerConfig = getETopicManagerConfig();
+        EBTopicManagerConfig ebTopicManagerConfig = topicManagerService.get();
         assertNotNull(ebTopicManagerConfig);
         assertEquals(2, ebTopicManagerConfig.getTopicConfigs().size());
         assertEquals("java.lang.Integer", ebTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
@@ -34,9 +33,9 @@ class TopicManagerServiceTest {
         assertEquals("java.lang.Integer", ebTopicManagerConfig.getTopicConfigsMap().get("greg-test1").getConfigEntriesMap().get("delete.retention.ms").getValue().getClass().getName());
 
         checkConfigAlter1(ebTopicManagerConfig);
-        topicManagerService.alterTopicConfigs(ebTopicManagerConfig);
+        topicManagerService.alter(ebTopicManagerConfig);
         // check the alter has been applied
-        checkConfigAlter1(getETopicManagerConfig());
+        checkConfigAlter1(topicManagerService.get());
     }
 
     private void checkConfigAlter1(EBTopicManagerConfig ebTopicManagerConfig) {
@@ -62,9 +61,9 @@ class TopicManagerServiceTest {
         // check the alter config is correct
         EBTopicManagerConfig ebTopicManagerConfig = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config-alter2.yaml"));
         assertEquals(3, ebTopicManagerConfig.getTopicConfigs().size());
-        topicManagerService.alterTopicConfigs(ebTopicManagerConfig);
+        topicManagerService.alter(ebTopicManagerConfig);
         // check the alter has been applied
-        checkConfigAlter2(getETopicManagerConfig());
+        checkConfigAlter2(topicManagerService.get());
     }
 
     private void checkConfigAlter2(EBTopicManagerConfig ebTopicManagerConfig) {
@@ -101,15 +100,9 @@ class TopicManagerServiceTest {
         setUp();
         ExecutionException thrown = Assertions.assertThrows(ExecutionException.class, () -> {
             EBTopicManagerConfig ebTopicManagerConfig = new EBTopicManagerConfig(this.getClass().getResourceAsStream("/test-topic-config1-bad.yaml"));
-            topicManagerService.alterTopicConfigs(ebTopicManagerConfig);
+            topicManagerService.alter(ebTopicManagerConfig);
         });
         assertEquals("org.apache.kafka.common.errors.InvalidConfigurationException: Unknown topic config name: delete.retention.ms.bad.config", thrown.getMessage());
-    }
-
-    private EBTopicManagerConfig getETopicManagerConfig() throws InterruptedException, ExecutionException, JsonProcessingException {
-        try (AdminClient adminClient = AdminClient.create(TopicManagerJobConfig.getConfig().getKafkaProperties())) {
-            return topicManagerService.get(adminClient);
-        }
     }
 
     public void setUp() throws Exception {

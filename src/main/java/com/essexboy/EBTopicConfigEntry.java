@@ -3,6 +3,9 @@ package com.essexboy;
 import lombok.*;
 import org.apache.kafka.clients.admin.ConfigEntry;
 
+/**
+ * POJO class to define the configuration of topic setting.
+ */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,6 +20,7 @@ public class EBTopicConfigEntry {
         this.value = parse(configEntry.value());
     }
 
+    // convert the string representation of the config item
     public Object parse(String value) {
         if (value.equalsIgnoreCase("true")) {
             return Boolean.TRUE;
